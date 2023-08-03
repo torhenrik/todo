@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -155,6 +156,10 @@ func (db *TaskDatabase) SinglePageHandler(ctx *gin.Context) {
 }
 
 func main() {
+	var tlsDomain string
+
+	flag.StringVar(&tlsDomain, "t", "", "Domain for tls, or empty for no tls.")
+
 	db := TaskDatabase{Tasks: make(map[int]Task), NextID: 1, Events: make([]Event, 0, 10000)}
 	r := gin.Default()
 
@@ -180,12 +185,16 @@ func main() {
 			ctx.Data(200, "application/json; charset=utf-8", []byte(fmt.Sprintf("%v", r.Routes())))
 		}
 	})
-
-	m := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist("todo.literal.no"),
-		Cache:      autocert.DirCache("/var/www/.cache"),
+	if tlsDomain != "" {
+		m := autocert.Manager{
+			Prompt:     autocert.AcceptTOS,
+			HostPolicy: autocert.HostWhitelist(tlsDomain),
+			Cache:      autocert.DirCache("/var/www/.cache"),
+		}
+		log.Fatal(autotls.RunWithManager(r, &m))
 	}
+	if tlsDomain == "" {
+		r.Run(":8080")
 
-	log.Fatal(autotls.RunWithManager(r, &m))
+	}
 }
