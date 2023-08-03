@@ -159,6 +159,7 @@ func main() {
 	var tlsDomain string
 
 	flag.StringVar(&tlsDomain, "t", "", "Domain for tls, or empty for no tls.")
+	flag.Parse()
 
 	db := TaskDatabase{Tasks: make(map[int]Task), NextID: 1, Events: make([]Event, 0, 10000)}
 	r := gin.Default()
